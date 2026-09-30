@@ -1,0 +1,12 @@
+# Optional: use your own certificate (NET-002 option a).
+# Copy to deploy/traefik/dynamic/tls.yml and provide the files as Docker secrets
+# tls_cert and tls_key. Without this file Traefik serves its self-signed default.
+tls:
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /run/secrets/tls_cert
+        keyFile: /run/secrets/tls_key
+  options:
+    default:
+      minVersion: VersionTLS12

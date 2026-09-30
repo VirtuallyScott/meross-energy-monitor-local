@@ -1,0 +1,49 @@
+# CI (NFR-031, NFR-032, SEC-052): the same Dockerfile test stages used locally.
+name: ci
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Lint, types and tests
+        run: docker buildx build --target test --load -t energy-hub/backend:test backend
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Lint, types and tests
+        run: docker buildx build --target test --load -t energy-hub/web:test web
+
+  images:
+    needs: [backend, web]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - name: Build multi-arch runtime images
+        run: |
+          for svc in backend web; do
+            docker buildx build --platform linux/amd64,linux/arm64 --target runtime \
+              -t energy-hub/$svc:${GITHUB_SHA::12} $svc
+          done
+      - name: Scan images for critical and high vulnerabilities
+        run: |
+          for svc in backend web; do
+            docker buildx build --target runtime --load -t energy-hub/$svc:scan $svc
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest \
+              image --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed energy-hub/$svc:scan
+          done

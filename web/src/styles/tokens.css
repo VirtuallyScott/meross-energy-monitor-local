@@ -1,0 +1,81 @@
+/* Design tokens. Direction: utility-meter instrument panel.
+   Warm paper and ink, amber for imported power, teal for export and solar. */
+:root {
+  --font-display: "Space Grotesk Variable", "Avenir Next", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, "SF Mono", monospace;
+
+  --paper: oklch(97.5% 0.012 85);
+  --paper-sunk: oklch(94% 0.016 85);
+  --surface: oklch(99.2% 0.006 85);
+  --ink: oklch(21% 0.02 70);
+  --ink-soft: oklch(42% 0.02 70);
+  --ink-faint: oklch(62% 0.015 70);
+  --rule: oklch(86% 0.02 80);
+  --rule-strong: oklch(72% 0.03 75);
+
+  --amber: oklch(76% 0.16 70);
+  --amber-ink: oklch(48% 0.13 60);
+  --amber-wash: oklch(94% 0.05 80);
+  --teal: oklch(62% 0.1 190);
+  --teal-wash: oklch(94% 0.03 190);
+  --danger: oklch(55% 0.19 28);
+  --danger-wash: oklch(95% 0.03 28);
+  --ok: oklch(60% 0.13 150);
+
+  /* The live meter face stays dark in both themes. */
+  --instrument: oklch(21% 0.02 70);
+  --instrument-ink: oklch(96% 0.012 85);
+  --instrument-edge: transparent;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: clamp(0.95rem, 0.9rem + 0.2vw, 1.05rem);
+  --text-lg: clamp(1.15rem, 1.05rem + 0.4vw, 1.35rem);
+  --text-xl: clamp(1.6rem, 1.3rem + 1.2vw, 2.25rem);
+  --text-readout: clamp(3.2rem, 2rem + 6vw, 6.5rem);
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-section: clamp(1.5rem, 1rem + 2.5vw, 3rem);
+
+  --radius-sm: 4px;
+  --radius-md: 10px;
+  --shadow-panel:
+    0 1px 0 oklch(100% 0 0 / 0.7) inset, 0 1px 2px oklch(30% 0.03 70 / 0.08),
+    0 8px 24px -12px oklch(30% 0.03 70 / 0.18);
+
+  --duration-fast: 140ms;
+  --duration-normal: 280ms;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: oklch(17% 0.012 70);
+    --paper-sunk: oklch(14% 0.012 70);
+    --surface: oklch(21% 0.014 70);
+    --ink: oklch(93% 0.012 85);
+    --ink-soft: oklch(76% 0.015 80);
+    --ink-faint: oklch(58% 0.015 75);
+    --rule: oklch(30% 0.015 70);
+    --rule-strong: oklch(42% 0.02 70);
+    --amber-ink: oklch(82% 0.14 75);
+    --amber-wash: oklch(30% 0.06 70);
+    --teal-wash: oklch(28% 0.04 190);
+    --danger-wash: oklch(28% 0.06 28);
+    --shadow-panel: 0 1px 0 oklch(100% 0 0 / 0.04) inset, 0 8px 24px -12px oklch(0% 0 0 / 0.6);
+    --instrument: oklch(11% 0.012 70);
+    --instrument-edge: oklch(34% 0.03 70);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-normal: 0ms;
+  }
+}

@@ -1,0 +1,121 @@
+.devices-page {
+  display: grid;
+  /* minmax(0, 1fr): wide tables scroll inside their panel instead of widening the page */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+}
+
+.crumb {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+.table-scroll {
+  overflow-x: auto;
+  margin-inline: calc(var(--space-6) * -1);
+  padding-inline: var(--space-6);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+.data-table th,
+.data-table td {
+  text-align: left;
+  padding: var(--space-3) var(--space-3) var(--space-3) 0;
+  border-bottom: 1px dotted var(--rule);
+  vertical-align: top;
+}
+.data-table thead th {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  border-bottom: 1px solid var(--rule-strong);
+}
+.data-table tbody th {
+  font-weight: 600;
+}
+.data-table tbody tr:hover {
+  background: var(--paper-sunk);
+}
+.data-table select {
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+}
+.row-muted {
+  color: var(--ink-faint);
+}
+
+.sub {
+  display: block;
+  font-weight: 400;
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+}
+
+.tag {
+  display: inline-block;
+  margin-top: var(--space-1);
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  background: var(--paper-sunk);
+}
+.tag-warn {
+  background: var(--amber-wash);
+  color: var(--amber-ink);
+}
+
+.add-form {
+  max-width: 32rem;
+}
+
+.probe-result {
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+  border-top: 1px dashed var(--rule);
+  max-width: 40rem;
+}
+
+.probe-result dl,
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--space-4);
+  margin: 0 0 var(--space-4);
+}
+.probe-result dt,
+.facts dt {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+.probe-result dd,
+.facts dd {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.inline-form input {
+  flex: 1 1 14rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+}

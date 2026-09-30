@@ -1,0 +1,226 @@
+# Energy Hub production stack for Docker Swarm (SWM-001 to SWM-012).
+#
+#   docker swarm init                                   # once, if not already a swarm
+#   docker node update --label-add energy.db=true  <db-node>
+#   docker node update --label-add energy.lan=true <node-with-route-to-devices>
+#   ./scripts/gen-secrets.sh && ./scripts/swarm-secrets.sh
+#   docker stack deploy -c deploy/stack.yml energy
+#
+# Images: build and push with `make images`, or set REGISTRY and TAG.
+
+x-backend-image: &backend-image ${REGISTRY:-energy-hub}/backend:${TAG:-0.1.0}
+
+x-backend-env: &backend-env
+  EHUB_ENV: production
+  EHUB_LOG_LEVEL: INFO
+  EHUB_DB_HOST: db
+  EHUB_DB_PASSWORD_FILE: /run/secrets/db_password
+  EHUB_DEVICE_CRED_KEY_FILE: /run/secrets/device_cred_key
+  EHUB_SETUP_TOKEN_FILE: /run/secrets/setup_token
+  # The stack's own overlay networks are never valid device addresses (SEC-040).
+  EHUB_DEVICE_BLOCKED_CIDRS: '["10.231.0.0/16"]'
+
+x-backend-secrets: &backend-secrets
+  - source: energy_db_password
+    target: db_password
+    uid: "10001"
+    mode: 0400
+  - source: energy_device_cred_key
+    target: device_cred_key
+    uid: "10001"
+    mode: 0400
+  - source: energy_setup_token
+    target: setup_token
+    uid: "10001"
+    mode: 0400
+
+x-hardening: &hardening
+  read_only: true
+  tmpfs: [/tmp]
+  cap_drop: [ALL]
+
+x-logging: &logging
+  driver: json-file
+  options: {max-size: "10m", max-file: "5"}
+
+services:
+  db:
+    image: timescale/timescaledb:2.30.2-pg17
+    environment:
+      POSTGRES_DB: energy
+      POSTGRES_USER: energy
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      TIMESCALEDB_TELEMETRY: "off"
+    secrets:
+      - source: energy_db_password
+        target: db_password
+    volumes: [db-data:/var/lib/postgresql/data]
+    networks: [data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U energy -d energy"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    logging: *logging
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.labels.energy.db == true]  # SWM-002: data stays on one node
+      resources:
+        limits: {memory: 2G}
+      restart_policy: {condition: any, delay: 5s}
+
+  # One-shot schema migration (UPG-001). Re-runs on each deploy; a no-op when current.
+  migrate:
+    image: *backend-image
+    command: ["migrate"]
+    environment: *backend-env
+    secrets: *backend-secrets
+    <<: *hardening
+    networks: [data]
+    logging: *logging
+    deploy:
+      mode: replicated-job
+      restart_policy: {condition: on-failure, delay: 10s, max_attempts: 10}
+
+  api:
+    image: *backend-image
+    command: ["api"]
+    environment: *backend-env
+    secrets: *backend-secrets
+    <<: *hardening
+    networks: [data, edge, egress]
+    logging: *logging
+    deploy:
+      replicas: 1  # login throttling is per replica (AUTH-004); scale after moving it to the DB
+      resources:
+        limits: {memory: 512M}
+      update_config: {order: start-first, failure_action: rollback, monitor: 30s}
+      rollback_config: {order: start-first}
+      restart_policy: {condition: any, delay: 5s}
+
+  collector:
+    image: *backend-image
+    command: ["collector"]
+    environment: *backend-env
+    secrets: *backend-secrets
+    <<: *hardening
+    healthcheck: {disable: true}
+    networks: [data, egress]
+    logging: *logging
+    deploy:
+      replicas: 1  # SWM-005; advisory locks guard against overlap during updates
+      placement:
+        constraints: [node.labels.energy.lan == true]  # SWM-008: needs a route to devices
+      resources:
+        limits: {memory: 256M}
+      update_config: {order: stop-first, failure_action: rollback}
+      restart_policy: {condition: any, delay: 5s}
+
+  worker:
+    image: *backend-image
+    command: ["worker"]
+    environment: *backend-env
+    secrets: *backend-secrets
+    <<: *hardening
+    healthcheck: {disable: true}
+    networks: [data]
+    logging: *logging
+    deploy:
+      replicas: 1
+      resources:
+        limits: {memory: 512M}
+      restart_policy: {condition: any, delay: 5s}
+
+  web:
+    image: ${REGISTRY:-energy-hub}/web:${TAG:-0.1.0}
+    <<: *hardening
+    networks: [edge]
+    logging: *logging
+    deploy:
+      replicas: 1
+      resources:
+        limits: {memory: 64M}
+      update_config: {order: start-first, failure_action: rollback}
+      restart_policy: {condition: any, delay: 5s}
+
+  traefik:
+    image: traefik:v3.7.13
+    command: ["--configFile=/etc/traefik/traefik.yml"]
+    ports:
+      - {target: 8080, published: 80, protocol: tcp, mode: host}
+      - {target: 8443, published: 443, protocol: tcp, mode: host}
+    configs:
+      - source: traefik_static
+        target: /etc/traefik/traefik.yml
+      - source: traefik_routes
+        target: /etc/traefik/dynamic/routes.yml
+    user: "65532:65532"
+    <<: *hardening
+    networks: [edge]
+    logging: *logging
+    deploy:
+      replicas: 1
+      resources:
+        limits: {memory: 128M}
+      restart_policy: {condition: any, delay: 5s}
+
+  backup:
+    image: timescale/timescaledb:2.30.2-pg17
+    entrypoint: ["/bin/sh", "/scripts/backup.sh"]
+    environment:
+      PGHOST: db
+      PGUSER: energy
+      PGDATABASE: energy
+      PGPASSWORD_FILE: /run/secrets/db_password
+      BACKUP_HOUR: "2"
+    secrets:
+      - source: energy_db_password
+        target: db_password
+    configs:
+      - source: backup_script
+        target: /scripts/backup.sh
+    volumes: [backups:/backups]
+    networks: [data]
+    logging: *logging
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.labels.energy.db == true]
+      restart_policy: {condition: any, delay: 30s}
+
+networks:
+  data:
+    driver: overlay
+    internal: true  # database traffic never leaves the stack
+    ipam:
+      config: [{subnet: 10.231.1.0/24}]
+  edge:
+    driver: overlay
+    ipam:
+      config: [{subnet: 10.231.2.0/24}]
+  egress:
+    driver: overlay
+    ipam:
+      config: [{subnet: 10.231.3.0/24}]
+
+volumes:
+  db-data:
+  backups:  # BAK-003: replace with an NFS or SMB volume so copies leave the host
+
+configs:
+  traefik_static:
+    file: ./traefik/traefik.yml
+  traefik_routes:
+    file: ./traefik/dynamic/routes.yml
+  backup_script:
+    file: ../scripts/backup.sh
+
+secrets:
+  energy_db_password:
+    external: true
+  energy_device_cred_key:
+    external: true
+  energy_setup_token:
+    external: true

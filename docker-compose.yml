@@ -1,0 +1,160 @@
+# Local development stack (SWM-010). Same images and wiring as deploy/stack.yml, plus the
+# device simulator. Usage:
+#   ./scripts/gen-secrets.sh
+#   docker compose up --build
+#   open https://localhost:8443   (self-signed certificate)
+name: energy-hub
+
+x-backend: &backend
+  image: energy-hub-backend:dev
+  build:
+    context: ./backend
+    target: runtime
+  environment: &backend-env
+    EHUB_ENV: development
+    EHUB_LOG_LEVEL: INFO
+    EHUB_DB_HOST: db
+    EHUB_DB_PASSWORD_FILE: /run/secrets/db_password
+    EHUB_DEVICE_CRED_KEY_FILE: /run/secrets/device_cred_key
+    EHUB_SETUP_TOKEN_FILE: /run/secrets/setup_token
+    # Stack networks are never valid device addresses (SEC-040).
+    EHUB_DEVICE_BLOCKED_CIDRS: '["10.231.0.0/16"]'
+    # The simulator runs on the Docker network; allow it for local testing only.
+    EHUB_DEVICE_ALLOWED_CIDRS: '[]'
+  secrets: [db_password, device_cred_key, setup_token]
+  read_only: true
+  tmpfs: [/tmp]
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: [ALL]
+  restart: unless-stopped
+  depends_on:
+    migrate:
+      condition: service_completed_successfully
+
+services:
+  db:
+    image: timescale/timescaledb:2.30.2-pg17
+    environment:
+      POSTGRES_DB: energy
+      POSTGRES_USER: energy
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      TIMESCALEDB_TELEMETRY: "off"
+    secrets: [db_password]
+    volumes: [db-data:/var/lib/postgresql/data]
+    ports: ["127.0.0.1:5432:5432"]
+    networks: [data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U energy -d energy"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  migrate:
+    <<: *backend
+    command: ["migrate"]
+    restart: "no"
+    healthcheck: {disable: true}
+    networks: [data]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    <<: *backend
+    command: ["api"]
+    ports: ["127.0.0.1:8000:8000"]
+    networks: [data, edge, egress]
+
+  collector:
+    <<: *backend
+    command: ["collector"]
+    healthcheck: {disable: true}
+    networks: [data, egress]
+
+  worker:
+    <<: *backend
+    command: ["worker"]
+    healthcheck: {disable: true}
+    networks: [data]
+
+  web:
+    image: energy-hub-web:dev
+    build:
+      context: ./web
+      target: runtime
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    networks: [edge]
+    restart: unless-stopped
+
+  traefik:
+    image: traefik:v3.7.13
+    command: ["--configFile=/etc/traefik/traefik.yml"]
+    ports: ["8080:8080", "8443:8443"]
+    volumes:
+      - ./deploy/traefik/traefik.dev.yml:/etc/traefik/traefik.yml:ro
+      - ./deploy/traefik/dynamic:/etc/traefik/dynamic:ro
+    read_only: true
+    user: "65532:65532"
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    networks: [edge]
+    depends_on: [api, web]
+    restart: unless-stopped
+
+  # EM16P simulator (TST-010). Add it in the UI as "sim:8080".
+  sim:
+    image: energy-hub-backend:dev
+    command: ["sim", "--port", "8080"]
+    healthcheck: {disable: true}
+    environment:
+      SIM_NOTIFY_S: "16"
+    networks:
+      egress:
+        ipv4_address: 172.30.99.10
+    profiles: ["sim"]
+
+  backup:
+    image: timescale/timescaledb:2.30.2-pg17
+    entrypoint: ["/bin/sh", "/scripts/backup.sh"]
+    environment:
+      PGHOST: db
+      PGUSER: energy
+      PGDATABASE: energy
+      PGPASSWORD_FILE: /run/secrets/db_password
+    secrets: [db_password]
+    volumes:
+      - ./scripts/backup.sh:/scripts/backup.sh:ro
+      - backups:/backups
+    networks: [data]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  data:
+    internal: true
+    ipam:
+      config: [{subnet: 10.231.1.0/24}]
+  edge:
+    ipam:
+      config: [{subnet: 10.231.2.0/24}]
+  # Outbound path to the device LAN. The simulator lives here in development.
+  egress:
+    ipam:
+      config: [{subnet: 172.30.99.0/24}]
+
+volumes:
+  db-data:
+  backups:
+
+secrets:
+  db_password:
+    file: ./deploy/secrets/db_password
+  device_cred_key:
+    file: ./deploy/secrets/device_cred_key
+  setup_token:
+    file: ./deploy/secrets/setup_token

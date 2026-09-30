@@ -1,0 +1,50 @@
+# Routing, security headers and rate limits (NET-001, NET-003, SEC-045, SEC-050).
+http:
+  routers:
+    api:
+      rule: "PathPrefix(`/api/`)"
+      entryPoints: [websecure]
+      service: api
+      middlewares: [security-headers, api-ratelimit]
+      priority: 100
+      tls: {}
+    web:
+      rule: "PathPrefix(`/`)"
+      entryPoints: [websecure]
+      service: web
+      middlewares: [security-headers]
+      priority: 1
+      tls: {}
+
+  middlewares:
+    security-headers:
+      headers:
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        contentTypeNosniff: true
+        frameDeny: true
+        referrerPolicy: strict-origin-when-cross-origin
+        permissionsPolicy: "camera=(), microphone=(), geolocation=()"
+        contentSecurityPolicy: >-
+          default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:;
+          connect-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self';
+          object-src 'none'; form-action 'self'
+        customResponseHeaders:
+          Server: ""
+    api-ratelimit:
+      rateLimit:
+        average: 10  # per client IP per second, about 600 per minute
+        burst: 60
+
+  services:
+    api:
+      loadBalancer:
+        servers:
+          - url: "http://api:8000"
+        healthCheck:
+          path: /healthz
+          interval: 15s
+    web:
+      loadBalancer:
+        servers:
+          - url: "http://web:8080"

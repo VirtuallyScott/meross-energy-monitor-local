@@ -1,0 +1,29 @@
+.auth {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+}
+.auth-card {
+  width: min(100%, 26rem);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-top: 4px solid var(--amber);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+  padding: var(--space-8) var(--space-6);
+}
+.auth-card h1 {
+  font-size: var(--text-xl);
+  margin: var(--space-2) 0 var(--space-2);
+}
+.auth-lead {
+  color: var(--ink-soft);
+  margin: 0 0 var(--space-6);
+  font-size: var(--text-sm);
+}
+.auth-card .btn {
+  width: 100%;
+  justify-content: center;
+  padding-block: 0.75rem;
+}

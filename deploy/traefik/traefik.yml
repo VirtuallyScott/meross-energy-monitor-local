@@ -1,0 +1,44 @@
+# Traefik static config. Routes come from the file provider only; no Docker socket is mounted.
+# Non-root ports inside the container; the stack publishes 80 -> 8080 and 443 -> 8443.
+entryPoints:
+  web:
+    address: ":8080"
+    http:
+      redirections:
+        entryPoint:
+          to: ":443"  # published port; the container listens on 8443
+          scheme: https
+  websecure:
+    address: ":8443"
+    http:
+      tls: {}
+    transport:
+      respondingTimeouts:
+        readTimeout: 60s
+        idleTimeout: 180s
+        writeTimeout: 0s  # keeps SSE live streams open
+
+providers:
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
+
+api:
+  dashboard: false
+
+ping:
+  entryPoint: websecure
+
+log:
+  level: INFO
+  format: json
+
+accessLog:
+  format: json
+  fields:
+    headers:
+      defaultMode: drop
+
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false

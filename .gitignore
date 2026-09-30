@@ -1,0 +1,64 @@
+# --- Secrets and local config (never commit) ---
+deploy/secrets/
+deploy/traefik/dynamic/tls.yml
+.env
+.env.*
+*.env.local
+!.env.example
+*.pem
+*.key
+
+# --- Python ---
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# --- Node / web ---
+node_modules/
+web/dist/
+*.tsbuildinfo
+.eslintcache
+.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Test output ---
+test-results/
+playwright-report/
+playwright/.cache/
+
+# --- Editors ---
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+*~
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Logs and backups ---
+*.log
+*.dump
+backups/
