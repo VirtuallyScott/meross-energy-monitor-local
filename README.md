@@ -7,6 +7,13 @@ TimescaleDB, and runs as a Docker Swarm stack. No cloud account is involved.
 Requirements live in [Docs/SRD](Docs/SRD/README.md). The device protocol is documented in
 [Docs/Reverse_API](Docs/Reverse_API/).
 
+## Hardware
+
+Built and tested against this monitor:
+[Refoss / Meross EM16P energy monitor on Amazon](https://www.amazon.com/gp/product/B0FSZYR7V4).
+This is **not** an affiliate link. Meross and Refoss are the same company, so the device may
+be sold under either brand.
+
 ## What works today
 
 | Area | Status |
