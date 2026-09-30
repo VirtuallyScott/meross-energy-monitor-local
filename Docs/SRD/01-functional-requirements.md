@@ -39,14 +39,33 @@ Priority: **M** must, **S** should, **C** could, **W** won't (v1). Protocol deta
 
 | ID | Pri | Requirement |
 |---|---|---|
-| CIR-001 | M | Each channel has a local display name (defaults to the device name), a **role** (`grid_main`, `solar`, `battery`, `branch`, `unused`), a phase/leg label and a visibility flag. |
-| CIR-002 | M | Channels with no CT connected (for example phase C at ~0.09 V and 0 W) are auto-suggested as `unused` and hidden by default. |
+| CIR-001 | M | Each channel has a local display name (defaults to the device name), a **role** (`grid_main`, `solar`, `battery`, `branch`, `unused`), a phase/leg label and a visibility flag. Users with `device:manage` set role and visibility on the device detail page. Hidden channels are still collected and stored, but left out of the live, overview, history and panel views. |
+| CIR-002 | M | Channels with no CT connected (for example phase C at ~0.09 V and 0 W) are auto-suggested as `unused` and hidden by default. Readings of `unused` channels are not collected. Changing a channel's role out of `unused` makes it visible, and changing it to `unused` hides it, unless the same change sets visibility explicitly. |
 | CIR-003 | M | Device merges are imported as circuits. Their totals are **computed by the system** because the device returns `emmerge:*` as empty objects. |
 | CIR-004 | M | Users can define **virtual circuits** as a signed sum of channels from any devices in the same site, for example `whole_house = em:1 + em:7` or `unmetered = whole_house − Σ branches`. |
 | CIR-005 | M | Circuit power and energy are summed. Current is summed only as an indicator and labeled as such. Voltage is not summed; the circuit shows the member channel voltages. |
 | CIR-006 | S | Circuits can be grouped with tags (for example "Pool", "HVAC") for dashboards and reports. |
 | CIR-007 | S | Negative results for derived circuits (for example unmetered load) are shown as-is and flagged, never clamped silently. |
 | CIR-008 | M | Changing a circuit definition applies to all history (circuits are computed at query time or via rebuildable aggregates, never stored as frozen totals). |
+
+### 3.1 Panels and breaker positions
+
+| ID | Pri | Requirement |
+|---|---|---|
+| PNL-001 | M | A site has zero or more **panels** (main panel, subpanels). Each has a name, a number of breaker spaces (2 to 84, even) and a numbering scheme: `odd_even` (default, North American: odd spaces down the left, even down the right) or `sequential` (left column top to bottom, then right column). |
+| PNL-002 | M | A **breaker** is placed on a panel by its starting space, pole count (1 single-pole, 2 **double-pole**, 3 triple-pole) and optional rating in amps, and gets **one sensor (channel) per pole**, for example CT A2 on space 1 and CT B2 on space 3 of a double-pole breaker. A pole may have no sensor, but a breaker needs at least one. The legs of a 240 V load often draw different current, so each pole's sensor is recorded separately. |
+| PNL-003 | M | A multi-pole breaker occupies consecutive spaces on the same side: `n, n+2, n+4` for `odd_even`, `n, n+1, n+2` for `sequential`. Every occupied space must exist and stay in one column. |
+| PNL-004 | M | A breaker, with all its sensors, is saved as one unit. Each pole holds at most one sensor and each sensor reads one pole. Breakers may not overlap. Sensors left out when a breaker is saved are removed from it. |
+| PNL-005 | M | The device detail page shows each channel's breaker (for example `Main · 1/3 · 2P 30 A`, and for multi-pole breakers the space its sensor reads). Users with `device:manage` edit the breaker there: panel, space, single-, double- or triple-pole, rating and a sensor picker for each space. |
+| PNL-006 | S | **Panel view**: a spatial drawing of each panel with breakers in their real spaces, multi-pole breakers spanning their spaces with each pole's own live reading level with its space, the breaker total, and empty spaces shown. A breaker links to its device. A list alternative serves keyboard and screen-reader users (UI-010). |
+| PNL-010 | S | **Mains strip**: at the top of the panel view, where the main breaker and bus bars sit, the panel shows its mains channels (role `grid_main`, for example CT A1 and CT B1) with each channel's leg label, live voltage, live power and today's kWh, plus the combined power and today's kWh. A panel's mains are the `grid_main` channels of the devices with a sensor on that panel; a panel with no sensors placed yet shows the site's `grid_main` channels. With no mains channel the strip says so and points to the channel role setting (CIR-001). |
+| PNL-011 | S | **Per-space readings**: every breaker, and every pole of a multi-pole breaker, shows its live voltage and a second reading chosen by the viewer: **power (W)** (default) or **current (A)**. The choice applies to the whole page, is kept in the URL (`?show=amps`) so it survives reload and can be shared, and is announced to screen readers. Current is the device's measured current; when the device reports none it is derived as W ÷ V and marked as estimated. A multi-pole breaker's total is summed in watts mode; in amps mode it shows the highest pole current, since leg currents of a 240 V load do not add. Missing readings show `—`, never 0. |
+| PNL-007 | S | Reducing a panel's space count or changing its numbering is rejected while an assigned breaker would fall outside the panel or change column. Deleting a panel clears the position of its channels. |
+| PNL-008 | C | Panel view shows load as a share of breaker rating, using live voltage, and flags breakers above 80 % of rating. |
+| PNL-009 | C | Record breakers with no CT, tandem (half-size) breakers and a printable panel directory. |
+| PNL-012 | C | Assign a panel's mains channels explicitly (for example a subpanel fed from a double-pole breaker in the main panel), overriding the PNL-010 default. |
+
+Panel and breaker data is descriptive only. It never changes readings, circuits or billing.
 
 ## 4. Data collection
 

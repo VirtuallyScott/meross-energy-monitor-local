@@ -70,6 +70,9 @@ Device protocol reference: [../Reverse_API/](../Reverse_API/). The SRDs cite it 
 | Device merge | A merged circuit stored on the device (`Em.Chmerge.*`), identified by a channel bitmask |
 | Virtual circuit | A circuit defined in this system as a signed sum of channels, possibly across devices |
 | Channel role | What a channel measures: `grid_main`, `solar`, `battery`, `branch`, `unused` |
+| Panel | An electrical panel (load center) at a site: the main panel or a subpanel, with a fixed number of breaker spaces |
+| Panel space | One numbered breaker position in a panel. A breaker occupies one space per pole |
+| Double-pole breaker | A breaker taking two spaces on the same side of the panel, feeding a 240 V branch circuit |
 | Site | A billing location with a time zone, a set of devices and an assigned rate plan |
 | Minute bucket | One row from `Em.Data.Get`: 60 s of energy, min/avg/max V, A and W |
 | Live sample | One `NotifyStatus` channel snapshot, every ~15 to 20 s |

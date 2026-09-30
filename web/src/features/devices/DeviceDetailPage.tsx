@@ -5,8 +5,10 @@ import { Link, useParams } from "react-router-dom";
 import { Alert, Button, Panel, StatusDot } from "../../components/ui";
 import { errorMessage, patch, post, put } from "../../lib/api";
 import { formatKwh, formatPower, relativeTime } from "../../lib/format";
-import { useDevice, useMe } from "../../lib/queries";
-import { type Channel, type ChannelRole, hasPerm } from "../../lib/types";
+import { useDevice, useMe, usePanels } from "../../lib/queries";
+import { type Channel, type ChannelRole, hasPerm, type Panel as PanelModel } from "../../lib/types";
+import { legSpace, positionLabel } from "../panels/layout";
+import { BreakerEditor } from "./BreakerEditor";
 import "./devices.css";
 
 const ROLES: { value: ChannelRole; label: string }[] = [
@@ -27,6 +29,7 @@ export function DeviceDetailPage() {
   const qc = useQueryClient();
   const { data: me } = useMe();
   const { data: device, error } = useDevice(deviceId);
+  const { data: panels = [] } = usePanels(siteId);
   const canManage = hasPerm(me, "device:manage", siteId);
   const canCredential = hasPerm(me, "device:credential", siteId);
 
@@ -101,6 +104,8 @@ export function DeviceDetailPage() {
                 <th scope="col">Pos.</th>
                 <th scope="col">Name</th>
                 <th scope="col">Role</th>
+                <th scope="col">Shown</th>
+                <th scope="col">Breaker</th>
                 <th scope="col">Power</th>
                 <th scope="col">Voltage</th>
                 <th scope="col">Today</th>
@@ -113,6 +118,9 @@ export function DeviceDetailPage() {
                   channel={c}
                   live={status[`em:${c.channel_no}`]}
                   deviceId={deviceId}
+                  siteId={siteId}
+                  panels={panels}
+                  deviceChannels={device.channels ?? []}
                   editable={canManage}
                 />
               ))}
@@ -130,47 +138,109 @@ function ChannelRow({
   channel,
   live,
   deviceId,
+  siteId,
+  panels,
+  deviceChannels,
   editable,
 }: {
   channel: Channel;
   live: LiveValues[string] | undefined;
   deviceId: string;
+  siteId: string;
+  panels: PanelModel[];
+  deviceChannels: Channel[];
   editable: boolean;
 }) {
   const qc = useQueryClient();
+  const leg = (channel.breaker_poles ?? 1) > 1 ? legSpace(channel, panels) : null;
+  const [editingBreaker, setEditingBreaker] = useState(false);
   const update = useMutation({
     mutationFn: (body: Partial<Channel>) => patch(`/channels/${channel.id}`, body),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["device", deviceId] }),
   });
   const power = formatPower(live?.power);
   return (
-    <tr className={channel.role === "unused" ? "row-muted" : undefined}>
-      <td className="num">{channel.phase_label ?? channel.channel_no}</td>
-      <th scope="row">{channel.name}</th>
-      <td>
-        {editable ? (
-          <select
-            aria-label={`Role for ${channel.name}`}
-            value={channel.role}
-            disabled={update.isPending}
-            onChange={(e) => update.mutate({ role: e.target.value as ChannelRole })}
-          >
-            {ROLES.map((r) => (
-              <option key={r.value} value={r.value}>
-                {r.label}
-              </option>
-            ))}
-          </select>
-        ) : (
-          ROLES.find((r) => r.value === channel.role)?.label
-        )}
-      </td>
-      <td className="num">
-        {power.value} <span className="unit">{power.unit}</span>
-      </td>
-      <td className="num">{live?.voltage !== undefined ? `${live.voltage.toFixed(1)} V` : "—"}</td>
-      <td className="num">{formatKwh(live?.day_energy)} kWh</td>
-    </tr>
+    <>
+      <tr className={channel.role === "unused" || !channel.visible ? "row-muted" : undefined}>
+        <td className="num">{channel.phase_label ?? channel.channel_no}</td>
+        <th scope="row">{channel.name}</th>
+        <td>
+          {editable ? (
+            <select
+              aria-label={`Role for ${channel.name}`}
+              value={channel.role}
+              disabled={update.isPending}
+              onChange={(e) => update.mutate({ role: e.target.value as ChannelRole })}
+            >
+              {ROLES.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            ROLES.find((r) => r.value === channel.role)?.label
+          )}
+        </td>
+        <td>
+          {editable ? (
+            <input
+              type="checkbox"
+              aria-label={`Show ${channel.name} in live, overview, history and panel views`}
+              checked={channel.visible}
+              disabled={update.isPending}
+              onChange={(e) => update.mutate({ visible: e.target.checked })}
+            />
+          ) : channel.visible ? (
+            "Yes"
+          ) : (
+            "No"
+          )}
+        </td>
+        <td>
+          <span className="num">{positionLabel(channel, panels)}</span>
+          {leg !== null && <span className="sub">This sensor reads space {leg}</span>}
+          {editable && (
+            <Button
+              className="btn-inline"
+              aria-expanded={editingBreaker}
+              aria-label={`Edit breaker for ${channel.name}`}
+              onClick={() => setEditingBreaker((v) => !v)}
+            >
+              {editingBreaker ? "Close" : "Edit"}
+            </Button>
+          )}
+        </td>
+        <td className="num">
+          {power.value} <span className="unit">{power.unit}</span>
+        </td>
+        <td className="num">
+          {live?.voltage !== undefined ? `${live.voltage.toFixed(1)} V` : "—"}
+        </td>
+        <td className="num">{formatKwh(live?.day_energy)} kWh</td>
+      </tr>
+      {update.isError && (
+        <tr className="row-editor">
+          <td colSpan={8}>
+            <Alert>{errorMessage(update.error)}</Alert>
+          </td>
+        </tr>
+      )}
+      {editingBreaker && (
+        <tr className="row-editor">
+          <td colSpan={8}>
+            <BreakerEditor
+              channel={channel}
+              deviceChannels={deviceChannels}
+              panels={panels}
+              siteId={siteId}
+              deviceId={deviceId}
+              onDone={() => setEditingBreaker(false)}
+            />
+          </td>
+        </tr>
+      )}
+    </>
   );
 }
 

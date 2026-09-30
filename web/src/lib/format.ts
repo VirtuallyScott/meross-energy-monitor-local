@@ -9,6 +9,19 @@ export function formatPower(watts: number | null | undefined): { value: string; 
   return { value: Math.round(watts).toString(), unit: "W" };
 }
 
+const DASH = "—";
+
+export function formatVoltage(volts: number | null | undefined): { value: string; unit: string } {
+  if (volts === null || volts === undefined || Number.isNaN(volts))
+    return { value: DASH, unit: "V" };
+  return { value: volts.toFixed(1), unit: "V" };
+}
+
+export function formatCurrent(amps: number | null | undefined): { value: string; unit: string } {
+  if (amps === null || amps === undefined || Number.isNaN(amps)) return { value: DASH, unit: "A" };
+  return { value: amps.toFixed(Math.abs(amps) >= 10 ? 1 : 2), unit: "A" };
+}
+
 export function formatKwh(kwh: number | null | undefined, digits = 2): string {
   if (kwh === null || kwh === undefined || Number.isNaN(kwh)) return "—";
   return kwh.toFixed(digits);

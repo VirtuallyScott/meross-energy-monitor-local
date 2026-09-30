@@ -73,7 +73,7 @@ Covered in [04-rbac-security.md](04-rbac-security.md). Release gates in §6.
 |---|---|---|
 | P0 Foundations | Repo, CI, stack skeleton, DB + migrations, auth, RBAC core, device simulator | Deploys on a single-node Swarm; login works; RBAC matrix test green |
 | P1 Collection | Device registry, credentials, collector (live + backfill), channels, circuits, device health | 72 h run against simulator with no data loss; TST-011 green |
-| P2 Visualization | Overview, live, history, breakdown, device detail | NFR-001, NFR-002 met |
+| P2 Visualization | Overview, live, history, breakdown, device detail, panels and breaker positions with mains strip and per-space V + W/A readings (PNL) | NFR-001, NFR-002 met |
 | P3 Billing | Rate plan model and editor, engine, cycles, estimate, projection, comparison, cost per circuit | TST-001 green including E1–E7 |
 | P4 Export and alerts | Exports, schedules, alert rules and channels | TST-020 flows green |
 | P5 Hardening | Backups, TLS options, audit viewer, docs, performance and security passes, real-device run | All §8 criteria met |

@@ -8,6 +8,7 @@ import "./shell.css";
 const NAV = [
   { to: "overview", label: "Overview" },
   { to: "history", label: "History" },
+  { to: "panels", label: "Panels" },
   { to: "devices", label: "Devices" },
 ];
 

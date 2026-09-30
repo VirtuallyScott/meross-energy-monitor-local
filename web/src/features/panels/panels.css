@@ -1,0 +1,381 @@
+/* Panel view (PNL-006, PNL-010, PNL-011): the load center drawn as an instrument face.
+   The enclosure stacks the mains strip (main breaker end) over the breaker face.
+   Face grid columns: space no. | left breakers | bus bar | right breakers | space no. */
+.panels-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+}
+
+.panels-intro {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--space-4);
+}
+.panels-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-4);
+}
+.panels-intro h1 {
+  font-size: var(--text-xl);
+}
+.lede {
+  margin: var(--space-2) 0 0;
+  max-width: 44rem;
+  color: var(--ink-soft);
+}
+
+.panel-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  column-gap: var(--space-4);
+  align-items: start;
+  margin-bottom: var(--space-4);
+}
+.panel-form .alert,
+.panel-form-actions {
+  grid-column: 1 / -1;
+}
+.panel-form-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.panel-total {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.panel-face {
+  --face-ink: var(--instrument-ink);
+  --face-dim: color-mix(in oklch, var(--instrument-ink) 45%, transparent);
+  --gutter: clamp(1.4rem, 1rem + 1.5vw, 2.5rem);
+  --row-h: clamp(3rem, 2.6rem + 1vw, 3.5rem);
+
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--gutter) minmax(0, 1fr) 0.9rem minmax(0, 1fr) var(--gutter);
+  grid-template-rows: repeat(var(--rows), var(--row-h));
+  gap: 3px var(--space-2);
+  padding: var(--space-4) var(--space-2);
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 calc(var(--row-h) + 2px),
+      oklch(100% 0 0 / 0.025) calc(var(--row-h) + 2px) calc(var(--row-h) + 3px)
+    ),
+    var(--instrument);
+  color: var(--face-ink);
+}
+
+.panel-enclosure {
+  max-width: 46rem;
+  margin-inline: auto;
+  overflow: hidden;
+  color: var(--instrument-ink);
+  background: var(--instrument);
+  border: 1px solid var(--instrument-edge);
+  border-radius: var(--radius-md);
+  box-shadow:
+    inset 0 0 0 6px oklch(0% 0 0 / 0.25),
+    var(--shadow-panel);
+}
+
+/* Mains strip (PNL-010): the service lugs feeding the bus, A leg left, B leg right. */
+.panel-mains {
+  --mains-dim: color-mix(in oklch, var(--instrument-ink) 55%, transparent);
+
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  background: linear-gradient(180deg, oklch(100% 0 0 / 0.05), transparent);
+  border-bottom: 2px solid oklch(55% 0.06 60 / 0.55);
+}
+.panel-mains.is-empty p {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--mains-dim);
+}
+.mains-legs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mains-leg {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: linear-gradient(180deg, oklch(32% 0.02 70), oklch(26% 0.015 70));
+  border: 1px solid oklch(100% 0 0 / 0.08);
+  border-left: 3px solid var(--amber);
+  border-radius: var(--radius-sm);
+}
+.mains-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--amber);
+}
+.mains-name {
+  overflow: hidden;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.mains-values {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+}
+.mains-values dt {
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mains-dim);
+}
+.mains-values dd {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.mains-values dd.is-live {
+  color: var(--amber);
+}
+.mains-total {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+.mains-total .eyebrow {
+  color: var(--mains-dim);
+}
+.mains-kwh {
+  font-size: var(--text-sm);
+  color: var(--mains-dim);
+}
+.panel-mains .unit {
+  margin-left: 0.2em;
+  font-size: 0.75em;
+  font-weight: 500;
+  color: var(--mains-dim);
+}
+
+.bus {
+  grid-column: 3;
+  grid-row: 1 / -1;
+  border-radius: 2px;
+  background: linear-gradient(90deg, oklch(55% 0.06 60), oklch(78% 0.1 70) 45%, oklch(50% 0.06 60));
+  opacity: 0.55;
+}
+
+.space-no {
+  align-self: center;
+  justify-self: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--face-dim);
+}
+
+.space-empty {
+  border: 1px dashed oklch(100% 0 0 / 0.12);
+  border-radius: var(--radius-sm);
+}
+
+.breakers {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+  grid-template-columns: subgrid;
+  grid-template-rows: subgrid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.breaker {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+.breaker a {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  height: 100%;
+  padding: 0 var(--space-2);
+  text-decoration: none;
+  background: linear-gradient(180deg, oklch(30% 0.015 70), oklch(25% 0.015 70));
+  border: 1px solid oklch(100% 0 0 / 0.08);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 0 oklch(100% 0 0 / 0.06) inset;
+  transition:
+    transform var(--duration-fast) var(--ease-out-expo),
+    border-color var(--duration-fast);
+}
+.breaker a:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in oklch, var(--amber) 60%, transparent);
+}
+.breaker a:active {
+  transform: translateY(0);
+}
+/* Right-side breakers mirror the left, so handles sit on the outer edge. */
+.side-1 a {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  direction: rtl;
+}
+.side-1 a > * {
+  direction: ltr;
+}
+
+.breaker-handle {
+  align-self: stretch;
+  width: 0.55rem;
+  margin-block: 0.45rem;
+  border-radius: 2px;
+  background: oklch(62% 0.01 70);
+}
+/* A multi-pole breaker has a tie bar joining its handles. */
+.breaker-handle[data-poles="2"],
+.breaker-handle[data-poles="3"] {
+  background:
+    linear-gradient(oklch(62% 0.01 70), oklch(62% 0.01 70)) center / 3px 100% no-repeat,
+    repeating-linear-gradient(
+      180deg,
+      oklch(62% 0.01 70) 0 calc(var(--row-h) - 1.2rem),
+      transparent calc(var(--row-h) - 1.2rem) calc(var(--row-h) + 3px)
+    );
+}
+
+.breaker-body {
+  display: grid;
+  min-width: 0;
+}
+.breaker-name {
+  overflow: hidden;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.breaker-meta {
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--face-dim);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.breaker-power {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--face-dim);
+  text-align: end;
+}
+.breaker-power.is-live {
+  color: var(--amber);
+}
+.breaker-power .unit {
+  margin-left: 0.15em;
+  font-size: 0.75em;
+  color: var(--face-dim);
+}
+
+/* Per-space reading (PNL-011): W or A on top, voltage beneath. */
+.slot-reading {
+  display: grid;
+  justify-items: end;
+  line-height: 1.15;
+}
+.slot-volts {
+  font-size: 0.68rem;
+  color: var(--face-dim);
+}
+.slot-volts .unit {
+  margin-left: 0.15em;
+}
+
+/* Multi-pole: one reading per pole, each level with its own space. */
+.breaker-legs {
+  display: grid;
+  grid-template-rows: repeat(var(--poles), 1fr);
+  align-self: stretch;
+}
+.breaker-leg {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+.leg-name {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--face-dim);
+}
+.breaker-leg + .breaker-leg {
+  border-top: 1px dotted oklch(100% 0 0 / 0.1);
+}
+.breaker-leg.is-empty .leg-name {
+  font-style: italic;
+  opacity: 0.7;
+}
+
+@media (max-width: 520px) {
+  .panel-face {
+    gap: 3px var(--space-1);
+    padding-inline: var(--space-1);
+  }
+  .breaker a {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    padding: 0 var(--space-1);
+  }
+  .breaker-handle,
+  .breaker-meta {
+    display: none;
+  }
+  .breaker-name {
+    font-size: var(--text-xs);
+  }
+  .breaker-power {
+    font-size: var(--text-xs);
+    text-align: start;
+  }
+  .slot-reading {
+    grid-auto-flow: column;
+    justify-content: start;
+    gap: var(--space-1);
+  }
+  .panel-mains {
+    padding-inline: var(--space-2);
+  }
+  .mains-legs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .breaker-leg {
+    justify-content: space-between;
+  }
+}

@@ -8,6 +8,7 @@ import { DevicesPage } from "./features/devices/DevicesPage";
 import { HistoryPage } from "./features/history/HistoryPage";
 import { Shell } from "./features/layout/Shell";
 import { OverviewPage } from "./features/overview/OverviewPage";
+import { PanelsPage } from "./features/panels/PanelsPage";
 import { api, ApiError, errorMessage } from "./lib/api";
 import { useMe, useSites } from "./lib/queries";
 
@@ -43,6 +44,7 @@ export function App() {
       <Route path="/s/:siteId" element={<Shell />}>
         <Route path="overview" element={<OverviewPage />} />
         <Route path="history" element={<HistoryPage />} />
+        <Route path="panels" element={<PanelsPage />} />
         <Route path="devices" element={<DevicesPage />} />
         <Route path="devices/:deviceId" element={<DeviceDetailPage />} />
         <Route index element={<Navigate to="overview" replace />} />

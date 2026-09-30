@@ -1,4 +1,4 @@
-"""Sites, devices, channels and circuits (SRD 03 §2)."""
+"""Sites, devices, channels, panels and circuits (SRD 03 §2)."""
 
 from __future__ import annotations
 
@@ -27,6 +27,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base, Timestamped, utcnow, uuid7
 
 CHANNEL_ROLES = ("grid_main", "solar", "battery", "branch", "unused")
+PANEL_NUMBERINGS = ("odd_even", "sequential")
 _PLACEHOLDER_NAME = re.compile(r"^em_channel_\d+$")
 
 
@@ -80,6 +81,18 @@ class Channel(Base):
     __table_args__ = (
         UniqueConstraint("device_id", "channel_no", name="uq_channel_device_no"),
         CheckConstraint(f"role in {CHANNEL_ROLES!r}", name="role"),
+        CheckConstraint("(panel_id is null) = (panel_slot is null)", name="panel_slot"),
+        CheckConstraint("breaker_poles in (1, 2, 3)", name="breaker_poles"),
+        CheckConstraint("breaker_pole between 1 and breaker_poles", name="breaker_pole"),
+        UniqueConstraint(
+            "panel_id",
+            "panel_slot",
+            "breaker_pole",
+            name="uq_channel_breaker_pole",
+            deferrable=True,
+            initially="DEFERRED",
+        ),
+        CheckConstraint("breaker_amps between 1 and 400", name="breaker_amps"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
@@ -91,6 +104,11 @@ class Channel(Base):
     phase_label: Mapped[str | None] = mapped_column(String(16))
     ct_factor: Mapped[float | None] = mapped_column(Float)
     visible: Mapped[bool] = mapped_column(Boolean, default=True)
+    panel_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("panel.id"))
+    panel_slot: Mapped[int | None] = mapped_column(SmallInteger)
+    breaker_poles: Mapped[int | None] = mapped_column(SmallInteger)
+    breaker_pole: Mapped[int | None] = mapped_column(SmallInteger)  # which leg this CT reads
+    breaker_amps: Mapped[int | None] = mapped_column(SmallInteger)
 
     device: Mapped[Device] = relationship(back_populates="channels")
 
@@ -105,6 +123,22 @@ class Channel(Base):
         if label and _PLACEHOLDER_NAME.match(label):
             label = None
         return self.display_name or label or self.phase_label or f"Channel {self.channel_no}"
+
+
+class Panel(Timestamped, Base):
+    """A main panel or subpanel whose breaker spaces channels point at (PNL-001)."""
+
+    __tablename__ = "panel"
+    __table_args__ = (
+        CheckConstraint("spaces between 2 and 84 and spaces % 2 = 0", name="spaces"),
+        CheckConstraint(f"numbering in {PANEL_NUMBERINGS!r}", name="numbering"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    site_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("site.id"))
+    name: Mapped[str] = mapped_column(String(120))
+    spaces: Mapped[int] = mapped_column(SmallInteger)
+    numbering: Mapped[str] = mapped_column(String(16), default="odd_even")
 
 
 class Circuit(Timestamped, Base):

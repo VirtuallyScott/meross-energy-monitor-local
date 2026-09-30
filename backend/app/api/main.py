@@ -20,6 +20,7 @@ from app.api.routers import (
     devices,
     health,
     live,
+    panels,
     readings,
     setup,
     sites,
@@ -36,7 +37,7 @@ ROUTERS = [
     (health.router, ""),
     *[
         (m.router, API_PREFIX)
-        for m in (setup, auth, tokens, users, sites, devices, circuits, readings, live)
+        for m in (setup, auth, tokens, users, sites, devices, panels, circuits, readings, live)
     ],
 ]
 

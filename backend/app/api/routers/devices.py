@@ -22,6 +22,7 @@ from app.devices import service as device_service
 from app.devices.credentials import KEY_VERSION, encrypt_password
 from app.devices.netguard import AddressNotAllowedError
 from app.devices.rpc import DeviceAuthError, DeviceRpcError
+from app.panels import service as panel_service
 
 router = APIRouter(tags=["devices"])
 PASSWORD_MAX = 32  # device UI limit (API spec §2)
@@ -70,6 +71,11 @@ def channel_out(c: Channel) -> dict[str, Any]:
         "phase_label": c.phase_label,
         "ct_factor": c.ct_factor,
         "visible": c.visible,
+        "panel_id": str(c.panel_id) if c.panel_id else None,
+        "panel_slot": c.panel_slot,
+        "breaker_poles": c.breaker_poles,
+        "breaker_pole": c.breaker_pole,
+        "breaker_amps": c.breaker_amps,
     }
 
 
@@ -268,6 +274,9 @@ async def update_device(
         device.base_url = result.base_url
     if "site_id" in changes:
         ensure_site(principal, P.DEVICE_MANAGE, changes["site_id"], "site")
+        if changes["site_id"] != device.site_id:
+            for channel in device.channels:  # panels belong to the old site
+                panel_service.clear(channel)
     for key, value in changes.items():
         setattr(device, key, value)
     device.version += 1
@@ -394,7 +403,7 @@ async def update_channel(
     if channel is None:
         raise not_found("channel")
     device = await _load(session, principal, P.DEVICE_MANAGE, channel.device_id)
-    changes = body.model_dump(exclude_unset=True)
+    changes = device_service.channel_changes(channel.role, body.model_dump(exclude_unset=True))
     for key, value in changes.items():
         setattr(channel, key, value)
     await audit.record(

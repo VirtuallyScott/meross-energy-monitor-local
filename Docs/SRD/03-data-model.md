@@ -42,7 +42,21 @@ channel (
   device_label text,                     -- name reported by device
   display_name text, role text check (role in ('grid_main','solar','battery','branch','unused')),
   phase_label text, ct_factor double precision, visible bool default true,
+  panel_id uuid null fk panel,           -- PNL-002: where the CT's breaker sits
+  panel_slot smallint null,              -- starting space, 1-based
+  breaker_poles smallint null check (breaker_poles in (1,2,3)),
+  breaker_pole smallint null check (breaker_pole between 1 and breaker_poles),  -- leg this CT reads
+  breaker_amps smallint null check (breaker_amps between 1 and 400),
+  check ((panel_id is null) = (panel_slot is null)),
+  unique (panel_id, panel_slot, breaker_pole) deferrable initially deferred,  -- one sensor per pole
   unique (device_id, channel_no)
+)
+
+panel (                                  -- PNL-001
+  id uuid pk, site_id uuid fk site, name text not null,
+  spaces smallint not null check (spaces between 2 and 84 and spaces % 2 = 0),
+  numbering text not null default 'odd_even' check (numbering in ('odd_even','sequential')),
+  created_at, updated_at
 )
 
 circuit (
@@ -72,6 +86,7 @@ Rules:
 
 - A virtual circuit may reference channels from several devices, all in the same site.
 - A virtual circuit may reference another circuit only by expanding it into channel members at save time (no nested references, no cycles).
+- A channel's panel must be in the same site as its device. Space occupancy and overlap rules (PNL-003, PNL-004) are checked by the API. Pole `k` of a breaker sits on its `k`-th occupied space.
 
 ## 3. Time-series schema
 

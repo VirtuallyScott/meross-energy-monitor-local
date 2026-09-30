@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -75,6 +76,23 @@ def phase_label(channel_no: int, total: int) -> str:
     per_phase = 6 if total >= 18 else max(1, total // 3 or total)
     phase = "ABC"[min((channel_no - 1) // per_phase, 2)]
     return f"{phase}{(channel_no - 1) % per_phase + 1}"
+
+
+def channel_changes(current_role: str, changes: Mapping[str, Any]) -> dict[str, Any]:
+    """Changes to apply to a channel; a role change into or out of ``unused`` sets visibility.
+
+    Channels discovered with no voltage start as ``unused`` and hidden (CIR-002). Giving one a
+    real role later shows it again, unless the caller sets ``visible`` explicitly.
+    """
+    out = dict(changes)
+    role = changes.get("role")
+    if "visible" in changes or role is None or role == current_role:
+        return out
+    if role == "unused":
+        out["visible"] = False
+    elif current_role == "unused":
+        out["visible"] = True
+    return out
 
 
 async def sync_device(

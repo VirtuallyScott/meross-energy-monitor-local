@@ -26,6 +26,34 @@ export interface Channel {
   phase_label: string | null;
   ct_factor: number | null;
   visible: boolean;
+  panel_id: string | null;
+  panel_slot: number | null;
+  breaker_poles: number | null;
+  breaker_pole: number | null;
+  breaker_amps: number | null;
+}
+
+export type PanelNumbering = "odd_even" | "sequential";
+
+export interface PanelBreaker {
+  channel_id: string;
+  channel_name: string;
+  phase_label: string | null;
+  device_id: string;
+  device_name: string;
+  slot: number;
+  poles: number;
+  pole: number;
+  amps: number | null;
+}
+
+export interface Panel {
+  id: string;
+  site_id: string;
+  name: string;
+  spaces: number;
+  numbering: PanelNumbering;
+  breakers: PanelBreaker[];
 }
 
 export interface Device {
@@ -68,9 +96,12 @@ export interface LiveChannel {
   id: string;
   device_id: string;
   name: string;
+  phase_label: string | null;
   role: ChannelRole;
   power_w: number;
   voltage_v: number | null;
+  current_a: number | null;
+  pf: number | null;
   day_kwh: number | null;
   day_ret_kwh: number | null;
 }

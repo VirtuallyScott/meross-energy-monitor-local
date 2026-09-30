@@ -25,6 +25,8 @@
 | Device config | `PUT /devices/{id}/channels` (names, factors → device), `GET/POST/PATCH/DELETE /devices/{id}/merges` | `device:configure` |
 | Discovery | `POST /discovery` (CIDR) → job | `device:discover` |
 | Channels | `GET /channels`, `PATCH /channels/{id}` (role, local name, visibility) | `device:manage` |
+| Panels | `GET /panels?site_id=` | `device:read` |
+| Panels | `POST /panels`, `PATCH /panels/{id}`, `DELETE /panels/{id}`, `PUT/DELETE /panels/{id}/breakers/{slot}` (poles, amps, one sensor per pole) | `device:manage` |
 | Circuits | `GET/POST /circuits`, `GET/PATCH/DELETE /circuits/{id}` | `circuit:*` |
 | Live | `GET /live/stream?site=` (Server-Sent Events), `GET /live/snapshot?site=` | `data:read` |
 | Readings | `GET /readings?circuits=&from=&to=&resolution=&metrics=` | `data:read` |
@@ -55,6 +57,8 @@ GET /api/v1/readings?circuits=<id>,<id>&from=2026-09-01T00:00:00-04:00&to=2026-1
 ### 2.2 Live stream
 
 `GET /live/stream?site=<id>` returns Server-Sent Events. Events: `snapshot` (on connect), `sample` (per device notification, circuit totals included), `device_state` (online/offline), `alert`. Heartbeat comment every 15 s. The server closes streams when the session or token expires.
+
+Each channel in a `snapshot` or `sample` carries `id`, `device_id`, `name`, `phase_label` (for example `A1`), `role`, `power_w`, `voltage_v`, `current_a`, `pf`, `day_kwh` and `day_ret_kwh`. Fields the device did not report are `null`. The panel view (PNL-010, PNL-011) reads mains and per-space values from this payload; it needs no separate endpoint.
 
 ### 2.3 Integration endpoints
 

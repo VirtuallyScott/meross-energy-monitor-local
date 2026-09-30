@@ -23,6 +23,7 @@ be sold under either brand.
 | Channels and circuits: roles, device merges mirrored, virtual circuits with +/- members | Done |
 | Readings API: minute, 15 min, hour, local day and month buckets | Done |
 | Live overview (Server-Sent Events), history chart, device pages | Done |
+| Panels: breaker position per channel (single, double, triple pole), spatial panel view with live power | Done |
 | Auth: first-run setup, sessions, CSRF, API tokens, RBAC with site scoping, audit log | Done |
 | Deployment: multi-stage images, dev compose with simulator, Swarm stack, Traefik TLS, backups | Done |
 | Bill estimation (flat, TOU, tiers, net metering) | Next phase |

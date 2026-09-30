@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { formatKwh, formatPower, formatUptime, relativeTime } from "./format";
+import {
+  formatCurrent,
+  formatKwh,
+  formatPower,
+  formatUptime,
+  formatVoltage,
+  relativeTime,
+} from "./format";
 
 describe("formatPower", () => {
   it("uses W below 1 kW", () => expect(formatPower(842.6)).toEqual({ value: "843", unit: "W" }));
@@ -10,6 +17,19 @@ describe("formatPower", () => {
     expect(formatPower(12345)).toEqual({ value: "12.3", unit: "kW" }));
   it("keeps sign for export", () => expect(formatPower(-1500).value).toBe("-1.50"));
   it("shows a dash for missing data", () => expect(formatPower(null).value).toBe("—"));
+});
+
+describe("formatVoltage", () => {
+  it("uses one decimal", () =>
+    expect(formatVoltage(124.24)).toEqual({ value: "124.2", unit: "V" }));
+  it("dashes missing", () => expect(formatVoltage(null).value).toBe("—"));
+});
+
+describe("formatCurrent", () => {
+  it("uses two decimals below 10 A", () =>
+    expect(formatCurrent(3.256)).toEqual({ value: "3.26", unit: "A" }));
+  it("uses one decimal from 10 A", () => expect(formatCurrent(12.46).value).toBe("12.5"));
+  it("dashes missing", () => expect(formatCurrent(undefined).value).toBe("—"));
 });
 
 describe("formatKwh", () => {

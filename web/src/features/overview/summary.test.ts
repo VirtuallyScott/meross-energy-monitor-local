@@ -15,7 +15,10 @@ const ch = (
   role,
   power_w,
   device_id: "d",
+  phase_label: null,
   voltage_v: 124,
+  current_a: null,
+  pf: null,
   day_kwh,
   day_ret_kwh: 0,
 });

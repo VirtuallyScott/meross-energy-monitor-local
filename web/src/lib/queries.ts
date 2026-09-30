@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { api } from "./api";
-import type { Circuit, Device, Me, Site } from "./types";
+import type { Circuit, Device, Me, Panel, Site } from "./types";
 
 export const useMe = () =>
   useQuery({ queryKey: ["me"], queryFn: () => api<Me>("/auth/me"), retry: false });
@@ -19,4 +19,9 @@ export const useCircuits = (siteId: string) =>
   useQuery({
     queryKey: ["circuits", siteId],
     queryFn: () => api<Circuit[]>(`/circuits?site_id=${siteId}`),
+  });
+export const usePanels = (siteId: string) =>
+  useQuery({
+    queryKey: ["panels", siteId],
+    queryFn: () => api<Panel[]>(`/panels?site_id=${siteId}`),
   });

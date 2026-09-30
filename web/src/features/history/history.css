@@ -9,45 +9,6 @@
   margin: 0;
 }
 
-.segmented {
-  border: 0;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-}
-.segmented legend {
-  font-size: var(--text-sm);
-  font-weight: 600;
-  margin-bottom: var(--space-1);
-  padding: 0;
-}
-.segmented button {
-  padding: 0.5rem 0.8rem;
-  border: 1px solid var(--rule-strong);
-  background: var(--surface);
-  font-size: var(--text-sm);
-  cursor: pointer;
-  transition: background-color var(--duration-fast);
-}
-.segmented button + button {
-  border-left: 0;
-}
-.segmented button:first-of-type {
-  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
-}
-.segmented button:last-of-type {
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-}
-.segmented button:hover {
-  background: var(--paper-sunk);
-}
-.segmented button[aria-pressed="true"] {
-  background: var(--ink);
-  color: var(--paper);
-  border-color: var(--ink);
-}
-
 .history-total {
   margin: var(--space-6) 0 var(--space-2);
   display: flex;
