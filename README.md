@@ -57,6 +57,14 @@ choose, and the first site.
 3. Sign in with the account you just created. The setup page and its token stop working once
    the first user exists.
 
+The local dev stack in Docker was set up with this account. It is for local development
+only, so do not reuse it on a real deployment:
+
+```text
+username: admin
+password: correct horse battery
+```
+
 Administrators can create more users and assign roles from the API (`/api/v1/users`). There
 is no password-reset command yet. If the only admin password is lost on a dev stack, the
 fix is to start over with an empty database, which deletes all data:
